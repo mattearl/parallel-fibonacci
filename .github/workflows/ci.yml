@@ -24,9 +24,8 @@ jobs:
     - name: Download fibonacci_data.bin
       run: wget -O ./fibonacci_data.bin "https://www.dropbox.com/scl/fi/6zbvut3evptw1mlm2v12e/fibonacci_data.bin?rlkey=rurifdumjozw3x6ar4sr8nwn7&st=a0z85mgk&dl=1"
 
-    - name: Build the project using flake (skip tests)
-      run: nix build --no-test
-
+    - name: Build the project using flake
+      run: nix build
 
     - name: Check rustfmt
       run: nix develop --command cargo fmt -- --check
