@@ -298,6 +298,41 @@ pub async fn seq_hybrid_kanal_tokio(
 }
 
 #[cfg(test)]
+mod fibonacci_100000_tests {
+    use super::*;
+
+    #[test]
+    fn test_fibonacci_basic_100000() {
+        test_util::test_fibonacci_100000_sync(seq_basic)
+    }
+
+    #[test]
+    fn test_fibonacci_hybrid_rayon_100000() {
+        test_util::test_fibonacci_100000_sync(|n| seq_hybrid_rayon(n, 10000))
+    }
+
+    #[test]
+    fn test_fibonacci_hybrid_100000() {
+        test_util::test_fibonacci_100000_sync(|n| seq_hybrid(n, 10000))
+    }
+
+    #[tokio::test]
+    async fn test_fibonacci_hybrid_tokio_100000() {
+        test_util::test_fibonacci_100000_async(|n| seq_hybrid_tokio(n, 10000, 20)).await
+    }
+
+    #[test]
+    fn test_fibonacci_hybrid_kanal_100000() {
+        test_util::test_fibonacci_100000_sync(|n| seq_hybrid_kanal(n, 10000))
+    }
+
+    #[tokio::test]
+    async fn test_fibonacci_hybrid_kanal_tokio_100000() {
+        test_util::test_fibonacci_100000_async(|n| seq_hybrid_kanal_tokio(n, 10000, 20)).await
+    }
+}
+
+#[cfg(test)]
 mod fibonacci_20_tests {
     use super::*;
 
@@ -334,8 +369,13 @@ mod fibonacci_20_tests {
 
 #[cfg(test)]
 mod test_util {
+    use byteorder::{BigEndian, ReadBytesExt};
     use num_bigint::BigUint;
+    use std::collections::HashMap;
+    use std::fs::File;
     use std::future::Future;
+    use std::io::{self, BufReader, Read};
+    use std::path::Path;
 
     use super::FibonacciSequenceError;
 
@@ -358,7 +398,10 @@ mod test_util {
             .await
             .expect("expect a fibonacci sequence to be generated");
 
-        assert_eq!(fib_sequence, expected_sequence, "Computed sequence must match expected sequence");
+        assert_eq!(
+            fib_sequence, expected_sequence,
+            "Computed sequence must match expected sequence"
+        );
     }
 
     pub fn test_fibonacci_20_sync<F, T>(fib_fn: F)
@@ -380,7 +423,57 @@ mod test_util {
             .into_result()
             .expect("Expect to generate Fibonacci sequence");
 
-        assert_eq!(fib_sequence, expected_sequence, "Computed sequence must match expected sequence");
+        assert_eq!(
+            fib_sequence, expected_sequence,
+            "Computed sequence must match expected sequence"
+        );
+    }
+
+    pub async fn test_fibonacci_100000_async<F, Fut>(fib_fn: F)
+    where
+        F: Fn(usize) -> Fut + Send,
+        Fut: Future<Output = Result<Vec<BigUint>, FibonacciSequenceError>> + Send,
+    {
+        check_fibonacci_data_file_exists();
+        let fib_map = load_fibonacci_from_binary("fibonacci_data.bin")
+            .expect("Failed to load Fibonacci data");
+
+        let n = 99999;
+        println!("F({n}) = {}", fib_map[&n]);
+
+        println!("Compute the Fibonacci sequence for n = {n}");
+        let fib_sequence = fib_fn(n)
+            .await
+            .expect("expect to generate a fibonacci sequence");
+
+        println!("Compare each computed Fibonacci number with the expected value");
+        for (i, fib) in fib_sequence.iter().enumerate() {
+            assert_eq!(fib, &fib_map[&i], "Mismatch at index {i}");
+        }
+    }
+
+    pub fn test_fibonacci_100000_sync<F, T>(fib_fn: F)
+    where
+        F: Fn(usize) -> T,
+        T: FibonacciResult,
+    {
+        // Load Fibonacci numbers from the binary file
+        check_fibonacci_data_file_exists();
+        let fib_map = load_fibonacci_from_binary("fibonacci_data.bin")
+            .expect("Failed to load Fibonacci data");
+
+        let n = 99999;
+        println!("F({n}) = {}", fib_map[&n]);
+
+        println!("Compute the Fibonacci sequence for n = {n}");
+        let fib_sequence = fib_fn(n)
+            .into_result()
+            .expect("Expect to generate Fibonacci sequence");
+
+        println!("Compare each computed Fibonacci number with the expected value");
+        for (i, fib) in fib_sequence.iter().enumerate() {
+            assert_eq!(fib, &fib_map[&i], "Mismatch at index {i}");
+        }
     }
 
     pub trait FibonacciResult {
@@ -398,7 +491,40 @@ mod test_util {
             self
         }
     }
+
+    // Function to load Fibonacci numbers from the binary file
+    fn load_fibonacci_from_binary(file_path: &str) -> io::Result<HashMap<usize, BigUint>> {
+        println!("Loading fibonacci sequence from file");
+        let file = File::open(file_path)?;
+        let mut reader = BufReader::new(file);
+        let mut fib_map = HashMap::new();
+        let mut index = 0;
+
+        // Loop through the binary file
+        while let Ok(length) = reader.read_u32::<BigEndian>() {
+            // Read the length of the next number
+            // Read the number itself based on the length
+            let mut num_bytes = vec![0u8; length as usize];
+            reader.read_exact(&mut num_bytes)?; // Ensure we read the exact number of bytes
+
+            let fib_number = BigUint::from_bytes_be(&num_bytes);
+            fib_map.insert(index, fib_number);
+            index += 1;
+        }
+
+        println!("Finished loading fibonacci sequence from file");
+        Ok(fib_map)
+    }
+
+    fn check_fibonacci_data_file_exists() {
+        let file_path = Path::new("fibonacci_data.bin");
+        if !file_path.exists() {
+            println!("Error: The fibonacci binary file is missing.");
+            println!("Please download it manually using the following command:");
+            println!("wget -O fibonacci_data.bin \"https://www.dropbox.com/scl/fi/6zbvut3evptw1mlm2v12e/fibonacci_data.bin?rlkey=rurifdumjozw3x6ar4sr8nwn7&st=a0z85mgk&dl=1\"");
+
+            // Fail the test if the file is missing
+            panic!("Test cannot proceed without the binary file.");
+        }
+    }
 }
-
-
-
