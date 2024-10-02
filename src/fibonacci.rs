@@ -40,7 +40,31 @@ pub fn fibonacci_matrix(n: usize) -> (BigUint, BigUint) {
     (result_matrix.c, result_matrix.a) // F(n-1) and F(n)
 }
 
-// Iterative function to compute Fibonacci numbers within a chunk
+/// Computes `n_steps` Fibonacci numbers iteratively, starting from two initial values `f_n1` (F(n-1))
+/// and `f_n` (F(n)). Useful for generating Fibonacci numbers in chunks.
+///
+/// # Parameters
+/// - `n_steps`: Number of Fibonacci numbers to compute.
+/// - `f_n1`: The (n-1)-th Fibonacci number.
+/// - `f_n`: The n-th Fibonacci number.
+///
+/// # Returns
+/// - A vector containing `n_steps` Fibonacci numbers starting from `f_n`.
+///
+/// # Example
+/// ```rust
+/// use fibonacci_assesment::fibonacci::fibonacci_chunk;
+/// use num_bigint::BigUint;
+/// let f_n1 = BigUint::from(5_u32); // F(5) = 5
+/// let f_n = BigUint::from(8_u32);  // F(6) = 8
+/// let chunk = fibonacci_chunk(4, f_n1, f_n);
+/// assert_eq!(chunk, vec![
+///     BigUint::from(8_u32),  // F(6)
+///     BigUint::from(13_u32), // F(7)
+///     BigUint::from(21_u32), // F(8)
+///     BigUint::from(34_u32), // F(9)
+/// ]);
+/// ```
 pub fn fibonacci_chunk(n_steps: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUint> {
     let mut fibs = Vec::with_capacity(n_steps);
     let mut a = f_n1;
