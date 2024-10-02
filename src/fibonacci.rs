@@ -9,7 +9,19 @@ use tokio::task::{self, JoinError, JoinHandle};
 
 use crate::math::{matrix_pow, Matrix};
 
-// Function to compute Fibonacci(n-1) and Fibonacci(n) using matrix exponentiation
+#[derive(Debug, thiserror::Error)]
+pub enum FibonacciSequenceError {
+    #[error("Tokio Join error: {0:?}")]
+    TokioJoin(#[from] JoinError),
+    #[error("Std Join error: {0:?}")]
+    StdJoin(String),
+    #[error("Acquire error: {0:?}")]
+    Acquire(#[from] AcquireError),
+    #[error("Send error: {0:?}")]
+    Send(#[from] SendError),
+}
+
+/// Function to compute Fibonacci(n-1) and Fibonacci(n) using matrix exponentiation
 pub fn fibonacci_matrix(n: usize) -> (BigUint, BigUint) {
     if n == 0 {
         return (BigUint::zero(), BigUint::one());
@@ -29,12 +41,12 @@ pub fn fibonacci_matrix(n: usize) -> (BigUint, BigUint) {
 }
 
 // Iterative function to compute Fibonacci numbers within a chunk
-pub fn fibonacci_chunk(start: usize, end: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUint> {
-    let mut fibs = Vec::with_capacity(end - start + 1);
+pub fn fibonacci_chunk(n_steps: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUint> {
+    let mut fibs = Vec::with_capacity(n_steps);
     let mut a = f_n1;
     let mut b = f_n;
 
-    for _ in start..=end {
+    for _ in 0..n_steps {
         let next = &a + &b;
         fibs.push(b.clone());
         a = b;
@@ -84,7 +96,7 @@ pub fn seq_hybrid(limit: usize, chunk_size: usize) -> Vec<BigUint> {
         let (f_start_minus_1, f_start) = fibonacci_matrix(start - 1);
 
         // Compute the Fibonacci numbers iteratively within the chunk
-        let chunk = fibonacci_chunk(start, end, f_start_minus_1, f_start);
+        let chunk = fibonacci_chunk(end - start + 1, f_start_minus_1, f_start);
 
         result.extend(chunk);
     }
@@ -106,7 +118,7 @@ pub fn seq_hybrid_rayon(limit: usize, chunk_size: usize) -> Vec<BigUint> {
             let (f_start_minus_1, f_start) = fibonacci_matrix(start - 1);
 
             // Compute the Fibonacci numbers iteratively within the chunk
-            fibonacci_chunk(start, end, f_start_minus_1, f_start)
+            fibonacci_chunk(end - start + 1, f_start_minus_1, f_start)
         })
         .collect();
 
@@ -116,18 +128,6 @@ pub fn seq_hybrid_rayon(limit: usize, chunk_size: usize) -> Vec<BigUint> {
     }
 
     result
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum FibonacciSequenceError {
-    #[error("Tokio Join error: {0:?}")]
-    TokioJoin(#[from] JoinError),
-    #[error("Std Join error: {0:?}")]
-    StdJoin(String),
-    #[error("Acquire error: {0:?}")]
-    Acquire(#[from] AcquireError),
-    #[error("Send error: {0:?}")]
-    Send(#[from] SendError),
 }
 
 pub async fn seq_hybrid_tokio(
@@ -157,7 +157,7 @@ pub async fn seq_hybrid_tokio(
                 let (f_start_minus_1, f_start) = fibonacci_matrix(start - 1);
 
                 // Compute the Fibonacci numbers iteratively within the chunk
-                let chunk = fibonacci_chunk(start, end, f_start_minus_1, f_start);
+                let chunk = fibonacci_chunk(end - start + 1, f_start_minus_1, f_start);
 
                 Ok((start, chunk)) // Return the start index and the computed chunk
             });
@@ -197,7 +197,7 @@ pub fn seq_hybrid_kanal(
             let (f_start_minus_1, f_start) = fibonacci_matrix(start - 1);
 
             // Compute the Fibonacci numbers for the chunk iteratively
-            let chunk = fibonacci_chunk(start, end, f_start_minus_1, f_start);
+            let chunk = fibonacci_chunk(end - start + 1, f_start_minus_1, f_start);
 
             // Send the result to the main thread
             sender.send((start, chunk))?;
@@ -264,7 +264,7 @@ pub async fn seq_hybrid_kanal_tokio(
             let (f_start_minus_1, f_start) = fibonacci_matrix(start - 1);
 
             // Compute the Fibonacci numbers iteratively within the chunk
-            let chunk = fibonacci_chunk(start, end, f_start_minus_1, f_start);
+            let chunk = fibonacci_chunk(end - start + 1, f_start_minus_1, f_start);
 
             // Send the result along with the start index to the receiver
             sender.send((start, chunk))?;
