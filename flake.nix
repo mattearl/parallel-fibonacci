@@ -15,6 +15,9 @@
           inherit system overlays;
         };
         cargoMeta = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+
+        # Reference to the fibonacci_data.bin file in the repository root
+        fibonacciData = ./fibonacci_data.bin;
       in
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
@@ -33,6 +36,11 @@
             })
           ];
           cargoBuildFlags = [ "" ];
+
+          # Include the locally available fibonacci_data.bin in the build output
+          postInstall = ''
+            cp ${fibonacciData} $out/fibonacci_data.bin
+          '';
         };
 
         devShells.default = pkgs.mkShell {
