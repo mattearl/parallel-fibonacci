@@ -15,21 +15,12 @@
           inherit system overlays;
         };
         cargoMeta = builtins.fromTOML (builtins.readFile ./Cargo.toml);
-
-        # Include fibonacci_data.bin in the source package explicitly
-        src = pkgs.lib.cleanSourceWith {
-          src = ./.;
-          filter = path: type:
-            # Only exclude the flake.lock file, include everything else (like fibonacci_data.bin)
-            !(type == "regular" && pkgs.lib.hasSuffix "flake.lock" path);
-        };
-
       in
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = cargoMeta.package.name;
           version = cargoMeta.package.version;
-          src = src;  # Use the modified src with the included file
+          src = ./.;
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
@@ -42,11 +33,6 @@
             })
           ];
           cargoBuildFlags = [ "" ];
-
-          # Copy the fibonacci_data.bin file to the output directory
-          postInstall = ''
-            cp ${src}/fibonacci_data.bin $out/fibonacci_data.bin
-          '';
         };
 
         devShells.default = pkgs.mkShell {
