@@ -16,13 +16,6 @@ jobs:
     - name: Checkout the repository
       uses: actions/checkout@v3
 
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        profile: minimal
-        override: true
-
     - name: Download fibonacci_data.bin
       run: wget -O ./fibonacci_data.bin "https://www.dropbox.com/scl/fi/6zbvut3evptw1mlm2v12e/fibonacci_data.bin?rlkey=rurifdumjozw3x6ar4sr8nwn7&st=a0z85mgk&dl=1"
 
