@@ -23,7 +23,7 @@
 //!
 //! ### Fibonacci Computation Approaches
 //!
-//! #### `fibonacci_matrix``
+//! #### `fibonacci_matrix`
 //! Computes Fibonacci(n-1) and Fibonacci(n) using matrix exponentiation. This method is efficient
 //! for large values of `n` and is the basis for chunk-based and hybrid computations.
 //!
@@ -40,7 +40,7 @@
 //! It uses matrix exponentiation to compute boundary values and iterates within chunks for intermediate
 //! values.
 //!
-//! #### `seq_hybrid_rayon``
+//! #### `seq_hybrid_rayon`
 //! Parallel version of `seq_hybrid`, leveraging the Rayon library for concurrent chunk processing.
 //! This significantly speeds up the computation by parallelizing the chunk processing.
 //!
