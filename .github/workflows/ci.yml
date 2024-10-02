@@ -1,0 +1,41 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v20
+      with:
+        extra_nix_config: "experimental-features = nix-command flakes"
+
+    - name: Download fibonacci_data.bin
+      run: wget -O fibonacci_data.bin "https://www.dropbox.com/scl/fi/6zbvut3evptw1mlm2v12e/fibonacci_data.bin?rlkey=rurifdumjozw3x6ar4sr8nwn7&st=a0z85mgk&dl=1"
+
+    - name: Build the project using flake
+      run: nix build
+
+    - name: Check rustfmt
+      run: nix develop --command cargo fmt -- --check
+
+    - name: Check clippy for linting
+      run: nix develop --command cargo clippy -- -D warnings
+
+    - name: Run tests
+      run: nix develop --command cargo test -- --nocapture
+
+    - name: Run benchmarks
+      run: nix develop --command cargo bench
+
