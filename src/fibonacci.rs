@@ -85,7 +85,15 @@ pub fn seq_basic(n: usize) -> Vec<BigUint> {
     fib_sequence
 }
 
-// Hybrid approach: matrix exponentiation for boundaries, iterative chunking for Fibonacci numbers
+/// Hybrid approach: Uses matrix exponentiation for computing Fibonacci boundary values
+/// and iteration for calculating Fibonacci numbers within those boundaries.
+///
+/// Parameters:
+/// - `limit`: Upper bound for the Fibonacci sequence.
+/// - `chunk_size`: Size of each chunk to be processed iteratively.
+///
+/// Returns:
+/// - A vector containing the Fibonacci sequence
 pub fn seq_hybrid(limit: usize, chunk_size: usize) -> Vec<BigUint> {
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
@@ -104,6 +112,15 @@ pub fn seq_hybrid(limit: usize, chunk_size: usize) -> Vec<BigUint> {
     result
 }
 
+/// Hybrid approach with parallel processing: Combines matrix exponentiation for boundary
+/// Fibonacci values and iteration to calculate the sequence, leveraging Rayon for parallelism.
+///
+/// Parameters:
+/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `chunk_size`: Size of each chunk to be processed iteratively in parallel.
+///
+/// Returns:
+/// - A vector containing the Fibonacci sequence
 pub fn seq_hybrid_rayon(limit: usize, chunk_size: usize) -> Vec<BigUint> {
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
@@ -130,6 +147,16 @@ pub fn seq_hybrid_rayon(limit: usize, chunk_size: usize) -> Vec<BigUint> {
     result
 }
 
+/// Hybrid approach with asynchronous parallelism using Tokio: Combines matrix exponentiation for boundary
+/// Fibonacci values and iteration to calculate the sequence in parallel using asynchronous tasks.
+///
+/// Parameters:
+/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `chunk_size`: Size of each chunk to be processed iteratively in parallel.
+/// - `max_concurrent_tasks`: Maximum number of concurrent asynchronous tasks allowed.
+///
+/// Returns:
+/// - A vector containing the Fibonacci sequence or an error if encountered.
 pub async fn seq_hybrid_tokio(
     limit: usize,
     chunk_size: usize,
@@ -177,7 +204,16 @@ pub async fn seq_hybrid_tokio(
     Ok(result)
 }
 
-// Function to compute Fibonacci sequence in chunks, with matrix exponentiation for boundaries
+/// Hybrid approach with multi-threading using `std::thread` and `kanal` for communication:
+/// Combines matrix exponentiation for boundary Fibonacci values an iteration, with
+/// communication between threads handled through the `kanal` library.
+///
+/// Parameters:
+/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `chunk_size`: Size of each chunk to be processed iteratively across multiple threads.
+///
+/// Returns:
+/// - A vector containing the Fibonacci sequence or an error if encountered.
 pub fn seq_hybrid_kanal(
     limit: usize,
     chunk_size: usize,
@@ -237,6 +273,17 @@ pub fn seq_hybrid_kanal(
     Ok(final_result)
 }
 
+/// Hybrid approach with asynchronous parallelism using Tokio threads and `kanal` for communication:
+/// Combines matrix exponentiation for boundary Fibonacci values and iteration, with
+/// asynchronous tasks managed by Tokio and thread communication handled through the `kanal` library.
+///
+/// Parameters:
+/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `chunk_size`: Size of each chunk to be processed iteratively by separate asynchronous tasks.
+/// - `max_concurrent_tasks`: Maximum number of concurrent asynchronous tasks to be executed at a time.
+///
+/// Returns:
+/// - A vector containing the Fibonacci sequence, or an error if encountered.
 pub async fn seq_hybrid_kanal_tokio(
     limit: usize,
     chunk_size: usize,
