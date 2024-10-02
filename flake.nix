@@ -16,14 +16,20 @@
         };
         cargoMeta = builtins.fromTOML (builtins.readFile ./Cargo.toml);
 
-        # Reference to the fibonacci_data.bin file in the repository root
-        fibonacciData = ./fibonacci_data.bin;
+        # Include fibonacci_data.bin in the source package explicitly
+        src = pkgs.lib.cleanSourceWith {
+          src = ./.;
+          filter = path: type:
+            # Only exclude the flake.lock file, include everything else (like fibonacci_data.bin)
+            !(type == "regular" && pkgs.lib.hasSuffix "flake.lock" path);
+        };
+
       in
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = cargoMeta.package.name;
           version = cargoMeta.package.version;
-          src = ./.;
+          src = src;  # Use the modified src with the included file
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
@@ -37,9 +43,9 @@
           ];
           cargoBuildFlags = [ "" ];
 
-          # Include the locally available fibonacci_data.bin in the build output
+          # Copy the fibonacci_data.bin file to the output directory
           postInstall = ''
-            cp ${fibonacciData} $out/fibonacci_data.bin
+            cp ${src}/fibonacci_data.bin $out/fibonacci_data.bin
           '';
         };
 
