@@ -464,7 +464,7 @@ mod test_util {
             .expect("Expect a fibonacci sequence to be generated");
 
         // Verify the result
-        verify_fibonacci_sequence(fib_sequence);
+        verify_fibonacci_20_sequence(fib_sequence);
     }
 
     pub fn test_fibonacci_20_sync<F, T>(fib_fn: F)
@@ -478,10 +478,10 @@ mod test_util {
             .expect("Expect to generate Fibonacci sequence");
 
         // Verify the result
-        verify_fibonacci_sequence(fib_sequence);
+        verify_fibonacci_20_sequence(fib_sequence);
     }
 
-    fn verify_fibonacci_sequence(fib_sequence: Vec<BigUint>) {
+    fn verify_fibonacci_20_sequence(fib_sequence: Vec<BigUint>) {
         // The expected Fibonacci sequence for n = 20
         let expected_u32_sequence = vec![
             0u32, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181,
@@ -498,27 +498,19 @@ mod test_util {
         );
     }
 
+    const N: usize = 99999;
+
     pub async fn test_fibonacci_100000_async<F, Fut>(fib_fn: F)
     where
         F: Fn(usize) -> Fut + Send,
         Fut: Future<Output = Result<Vec<BigUint>, FibonacciSequenceError>> + Send,
     {
-        check_fibonacci_data_file_exists();
-        let fib_map = load_fibonacci_from_binary("fibonacci_data.bin")
-            .expect("Failed to load Fibonacci data");
-
-        let n = 99999;
-        println!("F({n}) = {}", fib_map[&n]);
-
-        println!("Compute the Fibonacci sequence for n = {n}");
-        let fib_sequence = fib_fn(n)
+        println!("Compute the Fibonacci sequence for n = {N}");
+        let fib_sequence = fib_fn(N)
             .await
             .expect("expect to generate a fibonacci sequence");
 
-        println!("Compare each computed Fibonacci number with the expected value");
-        for (i, fib) in fib_sequence.iter().enumerate() {
-            assert_eq!(fib, &fib_map[&i], "Mismatch at index {i}");
-        }
+        verify_fibonacci_10000_sequence(fib_sequence);
     }
 
     pub fn test_fibonacci_100000_sync<F, T>(fib_fn: F)
@@ -526,18 +518,21 @@ mod test_util {
         F: Fn(usize) -> T,
         T: FibonacciResult,
     {
+        println!("Compute the Fibonacci sequence for n = {N}");
+        let fib_sequence = fib_fn(N)
+            .into_result()
+            .expect("Expect to generate Fibonacci sequence");
+
+        verify_fibonacci_10000_sequence(fib_sequence);
+    }
+
+    fn verify_fibonacci_10000_sequence(fib_sequence: Vec<BigUint>) {
         // Load Fibonacci numbers from the binary file
         check_fibonacci_data_file_exists();
         let fib_map = load_fibonacci_from_binary("fibonacci_data.bin")
             .expect("Failed to load Fibonacci data");
 
-        let n = 99999;
-        println!("F({n}) = {}", fib_map[&n]);
-
-        println!("Compute the Fibonacci sequence for n = {n}");
-        let fib_sequence = fib_fn(n)
-            .into_result()
-            .expect("Expect to generate Fibonacci sequence");
+        println!("F({N}) = {}", fib_map[&N]);
 
         println!("Compare each computed Fibonacci number with the expected value");
         for (i, fib) in fib_sequence.iter().enumerate() {
