@@ -458,24 +458,13 @@ mod test_util {
         F: Fn(usize) -> Fut,
         Fut: Future<Output = Result<Vec<BigUint>, FibonacciSequenceError>>,
     {
-        // The expected Fibonacci sequence for n = 20
-        let expected_u32_sequence = vec![
-            0u32, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181,
-        ];
-
-        // Convert the u32 sequence into BigUint
-        let expected_sequence: Vec<BigUint> =
-            expected_u32_sequence.into_iter().map(Into::into).collect();
-
         // Call the fibonacci function for n = 20
         let fib_sequence = fib_fn(20)
             .await
-            .expect("expect a fibonacci sequence to be generated");
+            .expect("Expect a fibonacci sequence to be generated");
 
-        assert_eq!(
-            fib_sequence, expected_sequence,
-            "Computed sequence must match expected sequence"
-        );
+        // Verify the result
+        verify_fibonacci_sequence(fib_sequence);
     }
 
     pub fn test_fibonacci_20_sync<F, T>(fib_fn: F)
@@ -483,6 +472,16 @@ mod test_util {
         F: Fn(usize) -> T,
         T: FibonacciResult,
     {
+        // Call the fibonacci function for n = 20
+        let fib_sequence = fib_fn(20)
+            .into_result()
+            .expect("Expect to generate Fibonacci sequence");
+
+        // Verify the result
+        verify_fibonacci_sequence(fib_sequence);
+    }
+
+    fn verify_fibonacci_sequence(fib_sequence: Vec<BigUint>) {
         // The expected Fibonacci sequence for n = 20
         let expected_u32_sequence = vec![
             0u32, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181,
@@ -492,11 +491,7 @@ mod test_util {
         let expected_sequence: Vec<BigUint> =
             expected_u32_sequence.into_iter().map(Into::into).collect();
 
-        // Call the Fibonacci function for n = 20
-        let fib_sequence = fib_fn(20)
-            .into_result()
-            .expect("Expect to generate Fibonacci sequence");
-
+        // Verify that the computed sequence matches the expected sequence
         assert_eq!(
             fib_sequence, expected_sequence,
             "Computed sequence must match expected sequence"
