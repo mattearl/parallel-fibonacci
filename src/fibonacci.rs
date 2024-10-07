@@ -96,7 +96,10 @@ pub fn fibonacci_chunk(n_steps: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUi
 /// use fibonacci_assesment::fibonacci;
 /// use num_bigint::BigUint;
 /// let fib_sequence = fibonacci::seq_basic(10);
-/// assert_eq!(fib_sequence[9], BigUint::from(34u32));
+/// assert_eq!(fib_sequence[0], BigUint::from(0_u32));  // F(0)
+/// assert_eq!(fib_sequence[1], BigUint::from(1_u32));  // F(1)
+/// assert_eq!(fib_sequence[8], BigUint::from(21_u32)); // F(8)
+/// assert_eq!(fib_sequence[9], BigUint::from(34_u32)); // F(9)
 /// ```
 pub fn seq_basic(n: usize) -> Vec<BigUint> {
     let mut fib_sequence = Vec::with_capacity(n + 1);
