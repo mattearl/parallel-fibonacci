@@ -86,10 +86,10 @@ pub fn fibonacci_chunk(n_steps: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUi
 /// storing the results in a vector. It runs in O(n) time and uses O(n) space.
 ///
 /// # Parameters
-/// - `n`: The number of Fibonacci numbers to compute.
+/// - `count`: The number of Fibonacci numbers to compute.
 ///
 /// # Returns
-/// A vector containing the first `n` Fibonacci numbers.
+/// - A vector containing the first `count` Fibonacci numbers.
 ///
 /// # Example
 /// ```
@@ -101,11 +101,11 @@ pub fn fibonacci_chunk(n_steps: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUi
 /// assert_eq!(fib_sequence[8], BigUint::from(21_u32)); // F(8)
 /// assert_eq!(fib_sequence[9], BigUint::from(34_u32)); // F(9)
 /// ```
-pub fn seq_basic(n: usize) -> Vec<BigUint> {
-    let mut fib_sequence = Vec::with_capacity(n + 1);
+pub fn seq_basic(count: usize) -> Vec<BigUint> {
+    let mut fib_sequence = Vec::with_capacity(count);
     fib_sequence.push(BigUint::zero());
     fib_sequence.push(BigUint::one());
-    for i in 2..n {
+    for i in 2..count {
         let next_value = &fib_sequence[i - 1] + &fib_sequence[i - 2];
         fib_sequence.push(next_value);
     }
@@ -116,16 +116,16 @@ pub fn seq_basic(n: usize) -> Vec<BigUint> {
 /// and iteration for calculating Fibonacci numbers within those boundaries.
 ///
 /// Parameters:
-/// - `limit`: Upper bound for the Fibonacci sequence.
+/// - `count`: The number of Fibonacci numbers to compute.
 /// - `chunk_size`: Size of each chunk to be processed iteratively.
 ///
 /// Returns:
-/// - A vector containing the Fibonacci sequence
-pub fn seq_hybrid(limit: usize, chunk_size: usize) -> Vec<BigUint> {
+/// - A vector containing the first `count` Fibonacci numbers.
+pub fn seq_hybrid(count: usize, chunk_size: usize) -> Vec<BigUint> {
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
-    for start in (2..limit).step_by(chunk_size) {
-        let end = std::cmp::min(start + chunk_size - 1, limit - 1);
+    for start in (2..count).step_by(chunk_size) {
+        let end = std::cmp::min(start + chunk_size - 1, count - 1);
 
         // Compute F(start-1) and F(start) using matrix exponentiation
         let (f_start_minus_1, f_start) = fibonacci_matrix(start - 1);
@@ -143,20 +143,20 @@ pub fn seq_hybrid(limit: usize, chunk_size: usize) -> Vec<BigUint> {
 /// Fibonacci values and iteration to calculate the sequence, leveraging Rayon for parallelism.
 ///
 /// Parameters:
-/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `count`: The number of Fibonacci numbers to compute.
 /// - `chunk_size`: Size of each chunk to be processed iteratively in parallel.
 ///
 /// Returns:
-/// - A vector containing the Fibonacci sequence
-pub fn seq_hybrid_rayon(limit: usize, chunk_size: usize) -> Vec<BigUint> {
+/// - A vector containing the first `count` Fibonacci numbers.
+pub fn seq_hybrid_rayon(count: usize, chunk_size: usize) -> Vec<BigUint> {
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
     // Create a parallel iterator over the start indices
-    let chunks: Vec<Vec<BigUint>> = (2..limit)
+    let chunks: Vec<Vec<BigUint>> = (2..count)
         .into_par_iter()
         .step_by(chunk_size)
         .map(|start| {
-            let end = std::cmp::min(start + chunk_size - 1, limit - 1);
+            let end = std::cmp::min(start + chunk_size - 1, count - 1);
 
             // Compute F(start-1) and F(start) using matrix exponentiation
             let (f_start_minus_1, f_start) = fibonacci_matrix(start - 1);
@@ -178,14 +178,14 @@ pub fn seq_hybrid_rayon(limit: usize, chunk_size: usize) -> Vec<BigUint> {
 /// Fibonacci values and iteration to calculate the sequence in parallel using asynchronous tasks.
 ///
 /// Parameters:
-/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `count`: The number of Fibonacci numbers to compute.
 /// - `chunk_size`: Size of each chunk to be processed iteratively in parallel.
 /// - `max_concurrent_tasks`: Maximum number of concurrent asynchronous tasks allowed.
 ///
 /// Returns:
-/// - A vector containing the Fibonacci sequence or an error if encountered.
+/// - A vector containing the first `count` Fibonacci numbers, or an error if encountered.
 pub async fn seq_hybrid_tokio(
-    limit: usize,
+    count: usize,
     chunk_size: usize,
     max_concurrent_tasks: usize,
 ) -> Result<Vec<BigUint>, FibonacciSequenceError> {
@@ -193,12 +193,12 @@ pub async fn seq_hybrid_tokio(
 
     // Pre-allocate the result vector with the correct size
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
-    result.resize(limit, BigUint::zero());
+    result.resize(count, BigUint::zero());
 
     let mut tasks = vec![];
 
-    for start in (2..limit).step_by(chunk_size) {
-        let end = std::cmp::min(start + chunk_size - 1, limit - 1);
+    for start in (2..count).step_by(chunk_size) {
+        let end = std::cmp::min(start + chunk_size - 1, count - 1);
         let semaphore = Arc::clone(&semaphore);
 
         // Spawn a new task for each chunk
@@ -236,23 +236,23 @@ pub async fn seq_hybrid_tokio(
 /// communication between threads handled through the `kanal` library.
 ///
 /// Parameters:
-/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `count`: The number of Fibonacci numbers to compute.
 /// - `chunk_size`: Size of each chunk to be processed iteratively across multiple threads.
 ///
 /// Returns:
-/// - A vector containing the Fibonacci sequence or an error if encountered.
+/// - A vector containing the first `count` Fibonacci numbers, or an error if encountered.
 pub fn seq_hybrid_kanal(
-    limit: usize,
+    count: usize,
     chunk_size: usize,
 ) -> Result<Vec<BigUint>, FibonacciSequenceError> {
     // Create a channel to communicate between threads
-    let (sender, receiver) = bounded::<(usize, Vec<BigUint>)>(limit / chunk_size + 1);
+    let (sender, receiver) = bounded::<(usize, Vec<BigUint>)>(count / chunk_size + 1);
 
     // Vector to store join handles to propagate thread results/errors back to main thread
     let mut handles = Vec::new();
 
-    for start in (2..limit).step_by(chunk_size) {
-        let end = cmp::min(start + chunk_size - 1, limit - 1);
+    for start in (2..count).step_by(chunk_size) {
+        let end = cmp::min(start + chunk_size - 1, count - 1);
 
         let sender = sender.clone();
         let handle = thread::spawn(move || -> Result<(), FibonacciSequenceError> {
@@ -305,14 +305,14 @@ pub fn seq_hybrid_kanal(
 /// asynchronous tasks managed by Tokio and thread communication handled through the `kanal` library.
 ///
 /// Parameters:
-/// - `limit`: Upper bound for the Fibonacci sequence
+/// - `count`: The number of Fibonacci numbers to compute.
 /// - `chunk_size`: Size of each chunk to be processed iteratively by separate asynchronous tasks.
 /// - `max_concurrent_tasks`: Maximum number of concurrent asynchronous tasks to be executed at a time.
 ///
 /// Returns:
-/// - A vector containing the Fibonacci sequence, or an error if encountered.
+/// - A vector containing the first `count` Fibonacci numbers, or an error if encountered.
 pub async fn seq_hybrid_kanal_tokio(
-    limit: usize,
+    count: usize,
     chunk_size: usize,
     max_concurrent_tasks: usize,
 ) -> Result<Vec<BigUint>, FibonacciSequenceError> {
@@ -320,12 +320,12 @@ pub async fn seq_hybrid_kanal_tokio(
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
     // Create a bounded Kanal channel to send the chunk results
-    let (sender, receiver) = bounded::<(usize, Vec<BigUint>)>(limit / chunk_size + 1);
+    let (sender, receiver) = bounded::<(usize, Vec<BigUint>)>(count / chunk_size + 1);
 
     let mut tasks = vec![];
 
-    for start in (2..limit).step_by(chunk_size) {
-        let end = std::cmp::min(start + chunk_size - 1, limit - 1);
+    for start in (2..count).step_by(chunk_size) {
+        let end = std::cmp::min(start + chunk_size - 1, count - 1);
         let semaphore = Arc::clone(&semaphore);
         let sender = sender.clone();
 
