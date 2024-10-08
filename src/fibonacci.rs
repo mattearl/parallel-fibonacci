@@ -356,15 +356,15 @@ pub async fn seq_hybrid_kanal_tokio(
         task.await??;
     }
 
-    // Collect the results in order
-    let mut results = vec![(0, vec![])];
+    // Collect the results
+    let mut results = Vec::new();
     while let Ok((start, chunk)) = receiver.recv() {
         results.push((start, chunk));
     }
 
     // Sort and combine chunks into the final result
     results.sort_by_key(|(start, _)| *start);
-    for (_, chunk) in results.into_iter().skip(1) {
+    for (_, chunk) in results.into_iter() {
         result.extend(chunk);
     }
 
