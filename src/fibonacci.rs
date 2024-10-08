@@ -86,10 +86,13 @@ pub fn fibonacci_chunk(n_steps: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUi
 /// storing the results in a vector. It runs in O(n) time and uses O(n) space.
 ///
 /// # Parameters
-/// - `count`: The number of Fibonacci numbers to compute.
+/// - `count`: The number of Fibonacci numbers to compute. Must be 2 or greater.
 ///
 /// # Returns
 /// - A vector containing the first `count` Fibonacci numbers.
+///
+/// # Panics
+/// - This function will panic if `count` is less than 2.
 ///
 /// # Example
 /// ```
@@ -102,6 +105,7 @@ pub fn fibonacci_chunk(n_steps: usize, f_n1: BigUint, f_n: BigUint) -> Vec<BigUi
 /// assert_eq!(fib_sequence[9], BigUint::from(34_u32)); // F(9)
 /// ```
 pub fn seq_basic(count: usize) -> Vec<BigUint> {
+    assert!(count >= 2, "Count must be 2 or greater");
     let mut fib_sequence = Vec::with_capacity(count);
     fib_sequence.push(BigUint::zero());
     fib_sequence.push(BigUint::one());
@@ -116,12 +120,16 @@ pub fn seq_basic(count: usize) -> Vec<BigUint> {
 /// and iteration for calculating Fibonacci numbers within those boundaries.
 ///
 /// Parameters:
-/// - `count`: The number of Fibonacci numbers to compute.
+/// - `count`: The number of Fibonacci numbers to compute. Must be 2 or greater.
 /// - `chunk_size`: Size of each chunk to be processed iteratively.
 ///
 /// Returns:
 /// - A vector containing the first `count` Fibonacci numbers.
+///
+/// # Panics
+/// - This function will panic if `count` is less than 2.
 pub fn seq_hybrid(count: usize, chunk_size: usize) -> Vec<BigUint> {
+    assert!(count >= 2, "Count must be 2 or greater");
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
     for start in (2..count).step_by(chunk_size) {
@@ -143,12 +151,16 @@ pub fn seq_hybrid(count: usize, chunk_size: usize) -> Vec<BigUint> {
 /// Fibonacci values and iteration to calculate the sequence, leveraging Rayon for parallelism.
 ///
 /// Parameters:
-/// - `count`: The number of Fibonacci numbers to compute.
+/// - `count`: The number of Fibonacci numbers to compute. Must be 2 or greater.
 /// - `chunk_size`: Size of each chunk to be processed iteratively in parallel.
 ///
 /// Returns:
 /// - A vector containing the first `count` Fibonacci numbers.
+///
+/// # Panics
+/// - This function will panic if `count` is less than 2.
 pub fn seq_hybrid_rayon(count: usize, chunk_size: usize) -> Vec<BigUint> {
+    assert!(count >= 2, "Count must be 2 or greater");
     let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
     // Create a parallel iterator over the start indices
@@ -178,17 +190,21 @@ pub fn seq_hybrid_rayon(count: usize, chunk_size: usize) -> Vec<BigUint> {
 /// Fibonacci values and iteration to calculate the sequence in parallel using asynchronous tasks.
 ///
 /// Parameters:
-/// - `count`: The number of Fibonacci numbers to compute.
+/// - `count`: The number of Fibonacci numbers to compute. Must be 2 or greater.
 /// - `chunk_size`: Size of each chunk to be processed iteratively in parallel.
 /// - `max_concurrent_tasks`: Maximum number of concurrent asynchronous tasks allowed.
 ///
 /// Returns:
 /// - A vector containing the first `count` Fibonacci numbers, or an error if encountered.
+///
+/// # Panics
+/// - This function will panic if `count` is less than 2.
 pub async fn seq_hybrid_tokio(
     count: usize,
     chunk_size: usize,
     max_concurrent_tasks: usize,
 ) -> Result<Vec<BigUint>, FibonacciSequenceError> {
+    assert!(count >= 2, "Count must be 2 or greater");
     let semaphore = Arc::new(Semaphore::new(max_concurrent_tasks));
 
     // Pre-allocate the result vector with the correct size
@@ -236,15 +252,19 @@ pub async fn seq_hybrid_tokio(
 /// communication between threads handled through the `kanal` library.
 ///
 /// Parameters:
-/// - `count`: The number of Fibonacci numbers to compute.
+/// - `count`: The number of Fibonacci numbers to compute. Must be 2 or greater.
 /// - `chunk_size`: Size of each chunk to be processed iteratively across multiple threads.
 ///
 /// Returns:
 /// - A vector containing the first `count` Fibonacci numbers, or an error if encountered.
+///
+/// # Panics
+/// - This function will panic if `count` is less than 2.
 pub fn seq_hybrid_kanal(
     count: usize,
     chunk_size: usize,
 ) -> Result<Vec<BigUint>, FibonacciSequenceError> {
+    assert!(count >= 2, "Count must be 2 or greater");
     // Create a channel to communicate between threads
     let (sender, receiver) = bounded::<(usize, Vec<BigUint>)>(count / chunk_size + 1);
 
@@ -305,17 +325,21 @@ pub fn seq_hybrid_kanal(
 /// asynchronous tasks managed by Tokio and thread communication handled through the `kanal` library.
 ///
 /// Parameters:
-/// - `count`: The number of Fibonacci numbers to compute.
+/// - `count`: The number of Fibonacci numbers to compute. Must be 2 or greater.
 /// - `chunk_size`: Size of each chunk to be processed iteratively by separate asynchronous tasks.
 /// - `max_concurrent_tasks`: Maximum number of concurrent asynchronous tasks to be executed at a time.
 ///
 /// Returns:
 /// - A vector containing the first `count` Fibonacci numbers, or an error if encountered.
+///
+/// # Panics
+/// - This function will panic if `count` is less than 2.
 pub async fn seq_hybrid_kanal_tokio(
     count: usize,
     chunk_size: usize,
     max_concurrent_tasks: usize,
 ) -> Result<Vec<BigUint>, FibonacciSequenceError> {
+    assert!(count >= 2, "Count must be 2 or greater");
     let semaphore = Arc::new(Semaphore::new(max_concurrent_tasks));
 
     // Create a bounded Kanal channel to send the chunk results
@@ -440,6 +464,41 @@ mod fibonacci_20_tests {
     #[tokio::test]
     async fn test_fibonacci_hybrid_kanal_tokio_20() {
         test_util::test_fibonacci_20_async(|n| seq_hybrid_kanal_tokio(n, 10000, 20)).await
+    }
+}
+
+#[cfg(test)]
+mod fibonacci_panic_tests {
+    use super::*;
+
+    #[test]
+    fn test_fibonacci_basic_panic() {
+        test_util::test_fibonacci_panic_sync(seq_basic)
+    }
+
+    #[test]
+    fn test_fibonacci_hybrid_rayon_panic() {
+        test_util::test_fibonacci_panic_sync(|n| seq_hybrid_rayon(n, 10000))
+    }
+
+    #[test]
+    fn test_fibonacci_hybrid_panic() {
+        test_util::test_fibonacci_panic_sync(|n| seq_hybrid(n, 10000))
+    }
+
+    #[tokio::test]
+    async fn test_fibonacci_hybrid_tokio_panic() {
+        test_util::test_fibonacci_panic_async(|n| seq_hybrid_tokio(n, 10000, 20)).await
+    }
+
+    #[test]
+    fn test_fibonacci_hybrid_kanal_panic() {
+        test_util::test_fibonacci_panic_sync(|n| seq_hybrid_kanal(n, 10000))
+    }
+
+    #[tokio::test]
+    async fn test_fibonacci_hybrid_kanal_tokio_panic() {
+        test_util::test_fibonacci_panic_async(|n| seq_hybrid_kanal_tokio(n, 10000, 20)).await
     }
 }
 
@@ -592,5 +651,48 @@ mod test_util {
             // Fail the test if the file is missing
             panic!("Test cannot proceed without the binary file.");
         }
+    }
+
+    pub fn test_fibonacci_panic_sync<F, T>(fib_fn: F)
+    where
+        F: Fn(usize) -> T + std::panic::UnwindSafe + std::panic::RefUnwindSafe,
+        T: FibonacciResult,
+    {
+        // Test for n = 0
+        let result = std::panic::catch_unwind(|| {
+            fib_fn(0);
+        });
+        assert!(result.is_err(), "Expected a panic for n = 0");
+
+        // Test for n = 1
+        let result = std::panic::catch_unwind(|| {
+            fib_fn(1);
+        });
+        assert!(result.is_err(), "Expected a panic for n = 1");
+    }
+
+    pub async fn test_fibonacci_panic_async<F, Fut>(fib_fn: F)
+    where
+        F: Fn(usize) -> Fut
+            + std::panic::UnwindSafe
+            + std::panic::RefUnwindSafe
+            + Clone
+            + Send
+            + Sync
+            + 'static,
+        Fut: Future<Output = Result<Vec<BigUint>, FibonacciSequenceError>> + Send + 'static,
+    {
+        // Test for n = 0
+        let fib_fn_clone = fib_fn.clone(); // Clone fib_fn for reuse
+        let result = tokio::spawn(async move { fib_fn_clone(0).await }).await;
+
+        // Ensure the task panicked
+        assert!(result.is_err(), "Expected a panic for n = 0");
+
+        // Test for n = 1
+        let result = tokio::spawn(async move { fib_fn(1).await }).await;
+
+        // Ensure the task panicked
+        assert!(result.is_err(), "Expected a panic for n = 1");
     }
 }
