@@ -292,7 +292,7 @@ pub fn seq_hybrid_kanal(
     results.sort_by_key(|(start, _)| *start);
 
     // Append each chunk to the final result
-    let mut final_result = vec![BigUint::zero(), BigUint::one()];
+    let mut final_result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
     for (_, chunk) in results.into_iter() {
         final_result.extend(chunk);
     }
@@ -317,7 +317,6 @@ pub async fn seq_hybrid_kanal_tokio(
     max_concurrent_tasks: usize,
 ) -> Result<Vec<BigUint>, FibonacciSequenceError> {
     let semaphore = Arc::new(Semaphore::new(max_concurrent_tasks));
-    let mut result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
 
     // Create a bounded Kanal channel to send the chunk results
     let (sender, receiver) = bounded::<(usize, Vec<BigUint>)>(count / chunk_size + 1);
@@ -358,17 +357,20 @@ pub async fn seq_hybrid_kanal_tokio(
 
     // Collect the results
     let mut results = Vec::new();
-    while let Ok((start, chunk)) = receiver.recv() {
+    for (start, chunk) in receiver {
         results.push((start, chunk));
     }
 
-    // Sort and combine chunks into the final result
+    // Sort the results by the starting index
     results.sort_by_key(|(start, _)| *start);
+
+    // Append each chunk to the final result
+    let mut final_result = vec![BigUint::zero(), BigUint::one()]; // Start with F(0), F(1)
     for (_, chunk) in results.into_iter() {
-        result.extend(chunk);
+        final_result.extend(chunk);
     }
 
-    Ok(result)
+    Ok(final_result)
 }
 
 #[cfg(test)]
