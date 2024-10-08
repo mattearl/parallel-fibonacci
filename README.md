@@ -1,4 +1,4 @@
-# Massively parallel Fibonacci
+# Massively Parallel Fibonacci
 
 This library provides multiple approaches to compute Fibonacci numbers efficiently, including
 hybrid, parallel, and asynchronous methods. The primary goal is to compute Fibonacci sequences
