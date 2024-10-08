@@ -282,18 +282,18 @@ pub fn seq_hybrid_kanal(
             .map_err(|e| FibonacciSequenceError::StdJoin(format!("Thread panicked: {:?}", e)))??;
     }
 
-    let mut final_result = vec![BigUint::zero(), BigUint::one()];
-
-    // Collect the results in the correct order
-    let mut results = vec![(0, vec![])]; // (start index, chunk)
+    // Collect the results
+    let mut results = Vec::new();
     for (start, chunk) in receiver {
         results.push((start, chunk));
     }
 
-    // Sort the results by the starting index and append each chunk to the final result
+    // Sort the results by the starting index
     results.sort_by_key(|(start, _)| *start);
 
-    for (_, chunk) in results.into_iter().skip(1) {
+    // Append each chunk to the final result
+    let mut final_result = vec![BigUint::zero(), BigUint::one()];
+    for (_, chunk) in results.into_iter() {
         final_result.extend(chunk);
     }
 
