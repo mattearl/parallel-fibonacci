@@ -9,7 +9,7 @@ along with concurrent execution mechanisms where applicable.
 
 - **Matrix Exponentiation**: Used for efficient computation of Fibonacci numbers at specific
   positions.
-- **Iterative Generation**: Generates chunks of Fibonacci numbers based using iteration.
+- **Iterative Generation**: Generates chunks of Fibonacci numbers using iteration.
 - **Hybrid Approaches**: Combines matrix exponentiation for boundary values with iteration
   for intermediate values.
 - **Concurrency**: Several functions leverage parallelism, both synchronous and asynchronous, to
